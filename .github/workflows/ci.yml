@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+      - name: Sync locked dev environment
+        run: uv sync --locked --extra dev --python ${{ matrix.python-version }}
+      - name: Run pytest
+        run: uv run --locked --python ${{ matrix.python-version }} pytest -v
+
+  wheel-smoke:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - name: Install Python 3.12
+        run: uv python install 3.12
+      - name: Build sdist and wheel
+        run: uv build
+      - name: Outside-repo wheel smoke test
+        run: |
+          set -euo pipefail
+          uv venv /tmp/smoke-venv --python 3.12
+          uv pip install --python /tmp/smoke-venv/bin/python dist/*.whl
+          mkdir -p /tmp/smoke-cwd
+          cd /tmp/smoke-cwd
+
+          /tmp/smoke-venv/bin/mcp-chaoswalk --version
+          /tmp/smoke-venv/bin/python -m mcp_chaoswalk --version
+          /tmp/smoke-venv/bin/mcp-chaoswalk --demo --steps 11 --walks 2 --output summary.md
+
+          set +e
+          /tmp/smoke-venv/bin/mcp-chaoswalk --demo --steps 2 --walks 1 --output summary.md
+          rc=$?
+          set -e
+          test "$rc" -eq 2
+
+          /tmp/smoke-venv/bin/mcp-chaoswalk --demo --steps 2 --walks 1 --output summary.md --force
+
+          set +e
+          /tmp/smoke-venv/bin/mcp-chaoswalk --demo --read-only-tool get_slow_example --steps 1 --timeout 0.1
+          rc=$?
+          set -e
+          test "$rc" -eq 1

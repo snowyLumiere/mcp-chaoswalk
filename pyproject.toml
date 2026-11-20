@@ -1,0 +1,83 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mcp-chaoswalk"
+version = "0.1.0"
+description = "Experimental stdio MCP regression testing for isolated test instances"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "SnowyLumiere" },
+]
+keywords = ["mcp", "model-context-protocol", "testing", "regression-testing", "fuzzing", "stdio"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = [
+    "mcp>=1.30.0,<2",
+    "jsonschema>=4.20.0",
+    "pydantic>=2.0.0",
+    "referencing>=0.28.4",
+    "rich>=13.0.0",
+    "networkx>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/SnowyLumiere/mcp-chaoswalk"
+Repository = "https://github.com/SnowyLumiere/mcp-chaoswalk"
+Issues = "https://github.com/SnowyLumiere/mcp-chaoswalk/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[project.scripts]
+mcp-chaoswalk = "mcp_chaoswalk.cli:main"
+mcp-chaos-walk = "mcp_chaoswalk.cli:main"
+
+[tool.hatch.build]
+# List source files explicitly so local call logs stay out of both archives.
+include = [
+    "/mcp_chaoswalk/__init__.py",
+    "/mcp_chaoswalk/__main__.py",
+    "/mcp_chaoswalk/cli.py",
+    "/mcp_chaoswalk/client.py",
+    "/mcp_chaoswalk/demo_server.py",
+    "/mcp_chaoswalk/graph.py",
+    "/mcp_chaoswalk/models.py",
+    "/mcp_chaoswalk/probes.py",
+    "/mcp_chaoswalk/reporter.py",
+    "/mcp_chaoswalk/shrinker.py",
+    "/mcp_chaoswalk/value_pool.py",
+    "/mcp_chaoswalk/walker.py",
+    "/targets/mock_filesystem_server.py",
+    "/targets/mock_order_warehouse_server.py",
+    "/tests/stdio_fixture.py",
+    "/tests/test_end_to_end.py",
+    "/tests/test_graph.py",
+    "/tests/test_probes.py",
+    "/tests/test_shrinker.py",
+    "/tests/test_value_pool.py",
+    "/uv.lock",
+]
+
+[tool.hatch.build.targets.wheel]
+exclude = ["/targets/", "/tests/", "/uv.lock"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "function"
